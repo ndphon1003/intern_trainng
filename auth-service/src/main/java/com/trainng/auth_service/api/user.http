@@ -1,0 +1,4 @@
+### Tạo mock user
+POST http://localhost:8081/api/users/mock
+Content-Type: application/json
+
