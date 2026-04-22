@@ -1,11 +1,12 @@
 package com.trainng.api_gateway.config;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -24,26 +25,22 @@ public class JwtFilter implements WebFilter {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
-    private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/auth"    );
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        // 1. Skip public endpoints
-        if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) {
+        // Bỏ qua endpoint public /api/auth
+        if (path.startsWith("/api/auth")) {
             return chain.filter(exchange);
         }
 
-        // 2. Check Authorization header
-        String authHeader = exchange.getRequest()
-                .getHeaders()
-                .getFirst(HttpHeaders.AUTHORIZATION);
+        // Kiểm tra header Authorization
+        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+        // Nếu không có token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange); // hoặc return 401 nếu muốn strict
+            return unauthorizedResponse(exchange, "Missing token");
         }
 
         String token = authHeader.substring(7);
@@ -51,32 +48,36 @@ public class JwtFilter implements WebFilter {
         Claims claims;
         try {
             claims = Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                    .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
         } catch (Exception e) {
-            return Mono.error(new RuntimeException("Invalid JWT token"));
+            return unauthorizedResponse(exchange, "Invalid token");
         }
 
-        // 3. Get username
+        // Lấy username và role từ claims
         String username = claims.getSubject();
-
-        // 4. SAFE roles handling
-        List<String> roles = claims.get("role", String.class) != null
-                ? List.of(claims.get("role", String.class))
+        String role = claims.get("role", String.class);
+        
+        List<SimpleGrantedAuthority> authorities = (role != null)
+                ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
                 : List.of();
 
-        List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                .toList();
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                username,
-                null,
-                authorities
-        );
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
 
         return chain.filter(exchange)
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+    }
+
+    // Hàm trả về response lỗi 401 với message JSON
+    private Mono<Void> unauthorizedResponse(ServerWebExchange exchange, String message) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        exchange.getResponse().getHeaders().setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        
+        String response = String.format("{\"status\": 401, \"message\": \"%s\"}", message);
+
+        return exchange.getResponse().writeWith(Mono.just(exchange.getResponse()
+                .bufferFactory().wrap(response.getBytes(StandardCharsets.UTF_8))));
     }
 }
