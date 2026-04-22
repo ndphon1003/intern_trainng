@@ -10,6 +10,9 @@ public class AuthResponse {
     private String email;
     private String role;
 
+    public AuthResponse() {
+    }
+
     public AuthResponse(String accessToken, String refreshToken, UUID userId, String username, String email, String role) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
