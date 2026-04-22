@@ -10,16 +10,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Users {
     
     @Id
-    private UUID userId = UUID.randomUUID();
+    private UUID userId;
 
     private String email;
     private String password_hashed;
     private String username;
     private String role; //"CUSTOMER", "ADMIN", "MANAGER"
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     public Users() {
+        this.userId = UUID.randomUUID();
+        this.createdAt = LocalDateTime.now();
     }
     public Users(String email, String password_hashed, String username, String role) {
         this.email = email;
