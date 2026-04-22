@@ -88,18 +88,25 @@ public class AuthService {
     }
 
     public boolean logout(String refreshToken) {
-        var refreshTokenOpt = refreshTokenRepo.findByToken(refreshToken);
-        if (refreshTokenOpt.isEmpty()) {
+
+        var tokenOpt = refreshTokenRepo.findByToken(refreshToken);
+
+        if (tokenOpt.isEmpty()) {
             return false;
         }
 
-        var tokenEntity = refreshTokenOpt.get();
-        tokenEntity.setRevoked(true);
-        refreshTokenRepo.save(tokenEntity);
+        var token = tokenOpt.get();
+
+        if (token.isRevoked()) {
+            return false;
+        }
+
+        refreshTokenRepo.delete(token);
+
         return true;
     }
 
-    public AuthResponse refreshToken(String refreshToken, String username) {
+    public AuthResponse refreshToken(String refreshToken) {
         var refreshTokenOpt = refreshTokenRepo.findByToken(refreshToken);
         if (refreshTokenOpt.isEmpty()) {
             return null;
@@ -110,6 +117,7 @@ public class AuthService {
             return null;
         }
 
+        String username = jwtUtil.extractUsername(refreshToken);
         Users user = userRepo.findByUsername(username).orElse(null);
         if (user == null) {
             return null;

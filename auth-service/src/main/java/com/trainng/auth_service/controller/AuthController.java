@@ -61,7 +61,7 @@ public class AuthController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<ResponseFormat> refreshToken(@RequestBody RefreshTokenRequest refreshToken) {
-        AuthResponse response = authService.refreshToken(refreshToken.getRefreshToken(), refreshToken.getUsername());
+        AuthResponse response = authService.refreshToken(refreshToken.getRefreshToken());
         if (response == null) {
             return ResponseEntity.status(400).body(new ResponseFormat(400, "Invalid refresh token", null));
         }
