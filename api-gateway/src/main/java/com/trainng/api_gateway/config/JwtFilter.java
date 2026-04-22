@@ -1,7 +1,6 @@
 package com.trainng.api_gateway.config;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -15,7 +14,6 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import reactor.core.publisher.Mono;
@@ -26,41 +24,57 @@ public class JwtFilter implements WebFilter {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/auth"    );
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+
         String path = exchange.getRequest().getURI().getPath();
 
-        // Bỏ qua public endpoint
-        if (path.startsWith("/api/auth")) {
+        // 1. Skip public endpoints
+        if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) {
             return chain.filter(exchange);
         }
 
-        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        // 2. Check Authorization header
+        String authHeader = exchange.getRequest()
+                .getHeaders()
+                .getFirst(HttpHeaders.AUTHORIZATION);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return Mono.error(new RuntimeException("Missing or invalid Authorization header"));
+            return chain.filter(exchange); // hoặc return 401 nếu muốn strict
         }
 
         String token = authHeader.substring(7);
 
         Claims claims;
         try {
-            Jws<Claims> jwsClaims = Jwts.parserBuilder()
+            claims = Jwts.parserBuilder()
                     .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
                     .build()
-                    .parseClaimsJws(token);
-            claims = jwsClaims.getBody();
+                    .parseClaimsJws(token)
+                    .getBody();
         } catch (Exception e) {
-            return Mono.error(new RuntimeException("Invalid JWT token: " + e.getMessage()));
+            return Mono.error(new RuntimeException("Invalid JWT token"));
         }
 
-        // Lấy username và roles từ JWT
+        // 3. Get username
         String username = claims.getSubject();
-        List<String> roles = claims.get("roles", List.class);
-        List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        // 4. SAFE roles handling
+        List<String> roles = claims.get("role", String.class) != null
+                ? List.of(claims.get("role", String.class))
+                : List.of();
+
+        List<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                .toList();
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                username,
+                null,
+                authorities
+        );
 
         return chain.filter(exchange)
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
