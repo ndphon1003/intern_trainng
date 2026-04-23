@@ -58,4 +58,20 @@ public class UserProfileController {
             return ResponseEntity.status(500).body(new ResponseFormat(500, "Failed to update profile: " + e.getMessage(), null));
         }
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<ResponseFormat> getAllUsers() {
+        try {
+            var response = userProfileService.getAllUserProfiles();
+
+            return ResponseEntity.ok(
+                    new ResponseFormat(200, "Users retrieved successfully", response)
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                    new ResponseFormat(500, "Failed to get users: " + e.getMessage(), null)
+            );
+        }
+    }
 }

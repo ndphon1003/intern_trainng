@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -38,11 +39,11 @@ public class JwtFilter implements WebFilter {
             return chain.filter(exchange);
         }
 
-
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange);
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
         String token = authHeader.substring(7);
@@ -75,6 +76,19 @@ public class JwtFilter implements WebFilter {
                 .request(mutatedRequest)
                 .build();
 
+        // Kiểm tra role để set authority
+        if (role == null || role.isBlank()) {
+            return unauthorized(exchange);
+        }
+        if (role.equals("ADMIN") || role.equals("MANAGER") || role.equals("CUSTOMER")) {
+            // hợp lệ
+        } else {
+            return unauthorized(exchange);
+        }
+        if (path.contains("/api/users/all") && !role.equals("ADMIN")) {
+            return unauthorized(exchange);
+        }
+
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(
                         username,
@@ -92,5 +106,10 @@ public class JwtFilter implements WebFilter {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    private Mono<Void> unauthorized(ServerWebExchange exchange) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
     }
 }
