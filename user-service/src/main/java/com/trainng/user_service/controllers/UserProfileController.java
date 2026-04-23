@@ -14,13 +14,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.trainng.user_service.dto.request.DeactivateRequest;
 import com.trainng.user_service.dto.request.RolePatchRequest;
 import com.trainng.user_service.dto.request.UpdateProfileRequest;
 import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
 import com.trainng.user_service.middlewares.RoleValidate;
 import com.trainng.user_service.middlewares.ValidateResponse;
+import com.trainng.user_service.models.BusinessStatus;
 import com.trainng.user_service.models.UserProfile;
+import com.trainng.user_service.services.BusinessStatusService;
 import com.trainng.user_service.services.UserProfileService;
 
 @RestController
@@ -29,6 +32,8 @@ public class UserProfileController {
     
     @Autowired
     private UserProfileService userProfileService;
+    @Autowired
+    private BusinessStatusService businessStatusService;
 
     @GetMapping("/profile")
     public ResponseEntity<ResponseFormat> getUserProfile(@RequestHeader("X-User-Id") String userId) {
@@ -112,6 +117,23 @@ public class UserProfileController {
                             "Failed to update role: " + e.getMessage(),
                             null
                     ));
+        }
+    }
+    
+    @PatchMapping("/deactivate-user")
+    public ResponseEntity<ResponseFormat> deactivateUser(@RequestBody DeactivateRequest request) {
+
+        try {
+            BusinessStatus result = businessStatusService.deactivateUser(request.getUserId());
+
+            return ResponseEntity.ok(
+                new ResponseFormat(200, "User deactivated successfully", result)
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                new ResponseFormat(500, "Failed to deactivate user: " + e.getMessage(), null)
+            );
         }
     }
 }

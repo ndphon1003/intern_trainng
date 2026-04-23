@@ -23,4 +23,25 @@ public class BusinessStatusService {
     public BusinessStatus getBusinessStatusByUserId(UUID userId) {
         return businessStatusRepo.findByUserId(userId);
     }
+
+    public BusinessStatus deactivateUser(UUID userId) {
+
+        BusinessStatus status = businessStatusRepo.findByUserId(userId);
+
+        // nếu chưa có record thì tạo mới luôn (tránh null)
+        if (status == null) {
+            status = new BusinessStatus(userId);
+        }
+
+        // nếu đã bị deactivate rồi thì không làm gì nữa
+        if (status.isDeactivated()) {
+            return status;
+        }
+
+        // update trạng thái
+        status.setDeactivated(true);
+
+        // lưu DB
+        return businessStatusRepo.save(status);
+    }
 }
