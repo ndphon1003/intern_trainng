@@ -32,4 +32,34 @@ public class UserProfileService {
         userProfileRepo.save(userProfile);
         return new UploadAvatarResponse(avatarUrl, userId);
     }
+    
+    public UserProfile updateUserProfile(UUID userId, String fullName, String bio, String phoneNumber,
+            String address, String city, String country) {
+        UserProfile userProfile = userProfileRepo.findByUserId(userId);
+        if (userProfile == null) {
+            userProfile = new UserProfile();
+            userProfile.setUserId(userId);
+        }
+        if (fullName != null) {
+            userProfile.setFullName(fullName);
+        }
+        if (bio != null) {
+            userProfile.setBio(bio);
+        }
+        if (phoneNumber != null) {
+            userProfile.setPhoneNumber(phoneNumber);
+        }
+        if (address != null) {
+            userProfile.setAddress(address);
+        }
+        if (city != null) {
+            userProfile.setCity(city);
+        }
+        if (country != null) {
+            userProfile.setCountry(country);
+        }
+        return userProfileRepo.save(userProfile);
+    }
 }
+
+
