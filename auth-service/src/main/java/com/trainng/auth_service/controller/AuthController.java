@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.trainng.auth_service.dto.request.LoginRequest;
+import com.trainng.auth_service.dto.request.LogoutRequest;
+import com.trainng.auth_service.dto.request.RefreshTokenRequest;
 import com.trainng.auth_service.dto.request.RegisterRequest;
 import com.trainng.auth_service.dto.response.AuthResponse;
 import com.trainng.auth_service.dto.response.ResponseFormat;
@@ -23,6 +25,7 @@ public class AuthController {
     private AuthService authService;
     @Autowired
     private RegisterValidate registerValidate;
+
 
 
     @PostMapping("/register")
@@ -46,4 +49,23 @@ public class AuthController {
         }
         return ResponseEntity.ok(new ResponseFormat(200, "User logged in successfully", response));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ResponseFormat> logout(@RequestBody LogoutRequest request) {
+        boolean isRevoked = authService.logout(request.getRefreshToken());
+        if (!isRevoked) {
+            return ResponseEntity.status(400).body(new ResponseFormat(400, "Invalid refresh token", null));
+        }
+        return ResponseEntity.ok(new ResponseFormat(200, "User logged out successfully", null));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ResponseFormat> refreshToken(@RequestBody RefreshTokenRequest refreshToken) {
+        AuthResponse response = authService.refreshToken(refreshToken.getRefreshToken());
+        if (response == null) {
+            return ResponseEntity.status(400).body(new ResponseFormat(400, "Invalid refresh token", null));
+        }
+        return ResponseEntity.ok(new ResponseFormat(200, "Token refreshed successfully", response));
+    }
+
 }

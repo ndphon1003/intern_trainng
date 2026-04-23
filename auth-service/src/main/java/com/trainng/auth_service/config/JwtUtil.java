@@ -29,4 +29,13 @@ public class JwtUtil {
                 .signWith(secretKey)
                 .compact();
     }
+    public String extractUsername(String token) {
+        // Implement logic to extract username from JWT token
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
 }
