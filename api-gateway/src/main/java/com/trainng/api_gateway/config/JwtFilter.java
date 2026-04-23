@@ -5,9 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -25,59 +23,49 @@ public class JwtFilter implements WebFilter {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
+    @Value("${internal.secret-key}")
+    private String INTERNAL_SECRET;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        // Bỏ qua endpoint public /api/auth
-        if (path.startsWith("/api/auth")) {
+        // bypass public
+        if (path.contains("/api/auth")) {
             return chain.filter(exchange);
         }
 
-        // Kiểm tra header Authorization
+
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-        // Nếu không có token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return unauthorizedResponse(exchange, "Missing token");
+            return chain.filter(exchange);
         }
 
         String token = authHeader.substring(7);
 
-        Claims claims;
-        try {
-            claims = Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (Exception e) {
-            return unauthorizedResponse(exchange, "Invalid token");
-        }
+        Claims claims = parseToken(token);
 
-        // Lấy username và role từ claims
         String username = claims.getSubject();
         String role = claims.get("role", String.class);
-        
-        List<SimpleGrantedAuthority> authorities = (role != null)
-                ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                : List.of();
 
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                        username,
+                        null,
+                        role != null ? List.of(() -> "ROLE_" + role) : List.of()
+                );
 
         return chain.filter(exchange)
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
     }
 
-    // Hàm trả về response lỗi 401 với message JSON
-    private Mono<Void> unauthorizedResponse(ServerWebExchange exchange, String message) {
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-        exchange.getResponse().getHeaders().setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-        
-        String response = String.format("{\"status\": 401, \"message\": \"%s\"}", message);
-
-        return exchange.getResponse().writeWith(Mono.just(exchange.getResponse()
-                .bufferFactory().wrap(response.getBytes(StandardCharsets.UTF_8))));
+    private Claims parseToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }
