@@ -1,6 +1,7 @@
 package com.trainng.auth_service.config;
 
 import java.util.Date;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -19,11 +20,12 @@ public class JwtUtil {
         this.secretKey = secretKey;
     }
 
-    public String generateToken(String username, String role, boolean isRefreshToken) {
+    public String generateToken(UUID userId, String username, String role, boolean isRefreshToken) {
         // Implement JWT token generation logic using jwtConfig and secretKey
         return Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
+                .claim("userId", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + (isRefreshToken ? jwtConfig.getRefreshExpiration() : jwtConfig.getAccessExpiration())))
                 .signWith(secretKey)
@@ -37,5 +39,14 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+    public UUID extractUserId(String token) {
+        // Implement logic to extract user ID from JWT token
+        return UUID.fromString(Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("userId", String.class));
     }
 }

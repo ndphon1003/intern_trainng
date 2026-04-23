@@ -1,5 +1,7 @@
 package com.trainng.auth_service.services;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,8 +35,8 @@ public class AuthService {
         user.setPassword_hashed(encodedPassword);
         user.setRole(role);
 
-        String accessToken = jwtUtil.generateToken(username, role, false);
-        String refreshToken = jwtUtil.generateToken(username, role, true);
+        String accessToken = jwtUtil.generateToken(user.getUserId(), username, role, false);
+        String refreshToken = jwtUtil.generateToken(user.getUserId(), username, role, true);
 
         RefreshToken refreshTokenEntity = new RefreshToken();
         refreshTokenEntity.setToken(refreshToken);
@@ -54,8 +56,8 @@ public class AuthService {
         return authResponse;
     }
 
-    public String generateToken(String username, String role, boolean isRefreshToken) {
-        return jwtUtil.generateToken(username, role, isRefreshToken);
+    public String generateToken(UUID userId, String username, String role, boolean isRefreshToken) {
+        return jwtUtil.generateToken(userId, username, role, isRefreshToken);
     }
 
     public AuthResponse login(String username, String password) {
@@ -68,8 +70,8 @@ public class AuthService {
             return null;
         }
 
-        String accessToken = jwtUtil.generateToken(username, user.getRole(), false);
-        String refreshToken = jwtUtil.generateToken(username, user.getRole(), true);
+        String accessToken = jwtUtil.generateToken(user.getUserId(), username, user.getRole(), false);
+        String refreshToken = jwtUtil.generateToken(user.getUserId(),username, user.getRole(), true);
 
         RefreshToken refreshTokenEntity = new RefreshToken();
         refreshTokenEntity.setToken(refreshToken);
@@ -124,9 +126,9 @@ public class AuthService {
         }
         String role = user.getRole();
 
-        String newAccessToken = jwtUtil.generateToken(username, role, false);
+        String newAccessToken = jwtUtil.generateToken(user.getUserId(), username, role, false);
 
-        String newRefreshToken = jwtUtil.generateToken(username, role, true);
+        String newRefreshToken = jwtUtil.generateToken(user.getUserId(), username, role, true);
         tokenEntity.setRevoked(true);
         refreshTokenRepo.save(tokenEntity);
 
