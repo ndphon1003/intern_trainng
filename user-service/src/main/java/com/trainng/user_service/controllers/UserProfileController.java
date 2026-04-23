@@ -14,9 +14,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.trainng.user_service.dto.request.RolePatchRequest;
 import com.trainng.user_service.dto.request.UpdateProfileRequest;
 import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
+import com.trainng.user_service.middlewares.RoleValidate;
+import com.trainng.user_service.middlewares.ValidateResponse;
 import com.trainng.user_service.models.UserProfile;
 import com.trainng.user_service.services.UserProfileService;
 
@@ -72,6 +75,43 @@ public class UserProfileController {
             return ResponseEntity.status(500).body(
                     new ResponseFormat(500, "Failed to get users: " + e.getMessage(), null)
             );
+        }
+    }
+
+    @PatchMapping("/update-role")
+    public ResponseEntity<ResponseFormat> updateUserRole(@RequestBody RolePatchRequest request) {
+
+        try {
+            ValidateResponse validate = RoleValidate.validateRole(request.getNewRole());
+
+            if (validate.getCode() != 200) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(new ResponseFormat(
+                                validate.getCode(),
+                                validate.getMessage(),
+                                null
+                        ));
+            }
+
+            var response = userProfileService.updateUserRole(
+                    request.getUserId(),
+                    request.getNewRole()
+            );
+
+            return ResponseEntity.ok(
+                    new ResponseFormat(200, "Updated role successfully", response)
+            );
+
+        } catch (Exception e) {
+
+            return ResponseEntity
+                    .status(500)
+                    .body(new ResponseFormat(
+                            500,
+                            "Failed to update role: " + e.getMessage(),
+                            null
+                    ));
         }
     }
 }

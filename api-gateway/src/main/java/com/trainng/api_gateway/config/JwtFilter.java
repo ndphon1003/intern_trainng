@@ -26,15 +26,11 @@ public class JwtFilter implements WebFilter {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
-    @Value("${internal.secret-key}")
-    private String INTERNAL_SECRET;
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        // bypass public
         if (path.contains("/api/auth")) {
             return chain.filter(exchange);
         }
@@ -46,58 +42,47 @@ public class JwtFilter implements WebFilter {
             return exchange.getResponse().setComplete();
         }
 
-        String token = authHeader.substring(7);
+        try {
+            String token = authHeader.substring(7);
+            Claims claims = parseToken(token);
 
-        Claims claims = parseToken(token);
+            String username = claims.getSubject();
+            String role = claims.get("role", String.class);
+            UUID userId = UUID.fromString(claims.get("userId", String.class));
 
-        String username = claims.getSubject();
-        String role = claims.get("role", String.class);
-        UUID userId = UUID.fromString(claims.get("userId", String.class));
-        
-        // ✅ Tạo HttpHeaders mới hoàn toàn độc lập — không putAll từ ReadOnly
-        HttpHeaders newHeaders = new HttpHeaders();
-        // Copy thủ công từng entry để tránh đụng ReadOnlyHttpHeaders
-        exchange.getRequest().getHeaders().forEach((key, values) -> 
-            newHeaders.put(key, values)
-        );
-        newHeaders.set("X-User-Id", userId.toString());
-        newHeaders.set("X-User-Name", username);
-        newHeaders.set("X-User-Role", role != null ? role : "");
+            // Inject headers
+            HttpHeaders newHeaders = new HttpHeaders();
+            exchange.getRequest().getHeaders().forEach(newHeaders::put);
+            newHeaders.set("X-User-Id", userId.toString());
+            newHeaders.set("X-User-Name", username);
+            newHeaders.set("X-User-Role", role != null ? role : "");
 
-        // ✅ Decorator override getHeaders() — không cần mutate builder
-        ServerHttpRequestDecorator mutatedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
-            @Override
-            public HttpHeaders getHeaders() {
-                return newHeaders;
-            }
-        };
+            ServerHttpRequestDecorator mutatedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
+                @Override
+                public HttpHeaders getHeaders() {
+                    return newHeaders;
+                }
+            };
 
-        ServerWebExchange modifiedExchange = exchange.mutate()
-                .request(mutatedRequest)
-                .build();
+            ServerWebExchange modifiedExchange = exchange.mutate()
+                    .request(mutatedRequest)
+                    .build();
 
-        // Kiểm tra role để set authority
-        if (role == null || role.isBlank()) {
-            return unauthorized(exchange);
+            // Set authentication — SecurityConfig sẽ tự xử lý phân quyền
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            role != null ? List.of(() -> "ROLE_" + role) : List.of()
+                    );
+
+            return chain.filter(modifiedExchange)
+                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
+
+        } catch (Exception e) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
-        if (role.equals("ADMIN") || role.equals("MANAGER") || role.equals("CUSTOMER")) {
-            // hợp lệ
-        } else {
-            return unauthorized(exchange);
-        }
-        if (path.contains("/api/users/all") && !role.equals("ADMIN")) {
-            return unauthorized(exchange);
-        }
-
-        UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        role != null ? List.of(() -> "ROLE_" + role) : List.of()
-                );
-
-        return chain.filter(modifiedExchange)
-                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
     }
 
     private Claims parseToken(String token) {
@@ -106,10 +91,5 @@ public class JwtFilter implements WebFilter {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-    }
-
-    private Mono<Void> unauthorized(ServerWebExchange exchange) {
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-        return exchange.getResponse().setComplete();
     }
 }

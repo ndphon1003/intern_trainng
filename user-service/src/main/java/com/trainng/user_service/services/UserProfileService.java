@@ -1,20 +1,22 @@
 package com.trainng.user_service.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.trainng.user_service.dto.response.RolePatchResponse;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
 import com.trainng.user_service.dto.response.UserInformation;
 import com.trainng.user_service.dto.response.UserListResponse;
+import com.trainng.user_service.models.BusinessStatus;
 import com.trainng.user_service.models.UserProfile;
+import com.trainng.user_service.models.Users;
 import com.trainng.user_service.repositories.UserProfileRepo;
+import com.trainng.user_service.repositories.UserRepo;
 
 @Service
 public class UserProfileService {
@@ -25,7 +27,7 @@ public class UserProfileService {
     @Autowired
     private BusinessStatusService businessStatusService;
     @Autowired
-    private MongoTemplate mongoTemplate;
+    private UserRepo userRepo;
 
     public UserProfile getProfileByUserId(UUID userId) {
         UserProfile userProfile = userProfileRepo.findByUserId(userId);
@@ -80,44 +82,34 @@ public class UserProfileService {
 
     public UserListResponse getAllUserProfiles() {
 
-        Aggregation aggregation = Aggregation.newAggregation(
+        List<UserProfile> userProfiles = userProfileRepo.findAll();
 
-            // 1. JOIN business_statuses
-            Aggregation.lookup(
-                "business_statuses",
-                "userId",
-                "userId",
-                "businessStatus"
-            ),
-            Aggregation.unwind("businessStatus", true),
+        List<UserInformation> userInformations = new ArrayList<>();
 
-            // 2. JOIN users (role nằm đây)
-            Aggregation.lookup(
-                "users",
-                "userId",
-                "_id",
-                "userAuth"
-            ),
-            Aggregation.unwind("userAuth", true),
+        for (UserProfile user : userProfiles) {
 
-            // 3. PROJECT (QUAN TRỌNG)
-            Aggregation.project()
-                .and("userId").as("userProfile.userId")
-                .and("fullName").as("userProfile.fullName")
-                .and("businessStatus").as("businessStatus")
-                .and("userAuth.role").as("role")
-        );
+            BusinessStatus status = businessStatusService.getBusinessStatusByUserId(user.getUserId());
+            Users user_role = userRepo.findByUserId(user.getUserId());
 
-        AggregationResults<UserInformation> results =
-                mongoTemplate.aggregate(
-                        aggregation,
-                        "user_profiles", // ⚠️ check tên collection này
-                        UserInformation.class
-                );
+            UserInformation info = new UserInformation();
+            info.setUserProfile(user);
+            info.setBusinessStatus(status);
+            info.setRole(user_role.getRole());
 
-        List<UserInformation> users = results.getMappedResults();
+            userInformations.add(info);
+        }
 
-        return new UserListResponse(users.size(), users);
+        return new UserListResponse(userInformations.size(), userInformations);
+    }
+
+    public RolePatchResponse updateUserRole(UUID userId, String newRole) {
+        Users user = userRepo.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        user.setRole(newRole);
+        userRepo.save(user);
+        return new RolePatchResponse(userId, newRole);
     }
 }
 

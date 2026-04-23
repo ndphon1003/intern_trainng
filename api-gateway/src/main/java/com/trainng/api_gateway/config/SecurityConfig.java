@@ -8,6 +8,8 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+import reactor.core.publisher.Mono;
+
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -25,14 +27,34 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/api/auth/**").permitAll()
-                        .pathMatchers("/api/users/all").hasRole("ADMIN")
+                        .pathMatchers("/api/users/all", "/api/users/update-role").hasRole("ADMIN")
                         .pathMatchers("/api/users/profile", "/api/users/upload-avatar", "/api/users/update-profile").authenticated()
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(ex -> ex
+                        // Chưa đăng nhập → 401
                         .authenticationEntryPoint((exchange, e) -> {
                             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                            return exchange.getResponse().setComplete();
+                            exchange.getResponse().getHeaders().setContentType(
+                                org.springframework.http.MediaType.APPLICATION_JSON
+                            );
+                            String body = "{\"status\":401,\"message\":\"Unauthorized\"}";
+                            return exchange.getResponse().writeWith(
+                                Mono.just(exchange.getResponse().bufferFactory()
+                                    .wrap(body.getBytes()))
+                            );
+                        })
+                        // Đã đăng nhập nhưng không đủ quyền → 403
+                        .accessDeniedHandler((exchange, e) -> {
+                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                            exchange.getResponse().getHeaders().setContentType(
+                                org.springframework.http.MediaType.APPLICATION_JSON
+                            );
+                            String body = "{\"status\":403,\"message\":\"Forbidden\"}";
+                            return exchange.getResponse().writeWith(
+                                Mono.just(exchange.getResponse().bufferFactory()
+                                    .wrap(body.getBytes()))
+                            );
                         })
                 )
                 .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
