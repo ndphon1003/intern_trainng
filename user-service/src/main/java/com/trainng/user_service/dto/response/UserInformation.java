@@ -7,13 +7,15 @@ public class UserInformation {
 
     private UserProfile userProfile;
     private BusinessStatus businessStatus;
+    private String role;
 
     public UserInformation() {
     }
 
-    public UserInformation(UserProfile userProfile, BusinessStatus businessStatus) {
+    public UserInformation(UserProfile userProfile, BusinessStatus businessStatus, String role) {
         this.userProfile = userProfile;
         this.businessStatus = businessStatus;
+        this.role = role;
     }
 
     // ===== Getter / Setter =====
@@ -32,5 +34,13 @@ public class UserInformation {
 
     public void setBusinessStatus(BusinessStatus businessStatus) {
         this.businessStatus = businessStatus;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

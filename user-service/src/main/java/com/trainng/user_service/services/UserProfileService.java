@@ -1,17 +1,18 @@
 package com.trainng.user_service.services;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
 import com.trainng.user_service.dto.response.UserInformation;
 import com.trainng.user_service.dto.response.UserListResponse;
-import com.trainng.user_service.models.BusinessStatus;
 import com.trainng.user_service.models.UserProfile;
 import com.trainng.user_service.repositories.UserProfileRepo;
 
@@ -23,6 +24,8 @@ public class UserProfileService {
     private CloudinaryService cloudinaryService;
     @Autowired
     private BusinessStatusService businessStatusService;
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     public UserProfile getProfileByUserId(UUID userId) {
         UserProfile userProfile = userProfileRepo.findByUserId(userId);
@@ -77,22 +80,44 @@ public class UserProfileService {
 
     public UserListResponse getAllUserProfiles() {
 
-        List<UserProfile> userProfiles = userProfileRepo.findAll();
+        Aggregation aggregation = Aggregation.newAggregation(
 
-        List<UserInformation> userInformations = new ArrayList<>();
+            // 1. JOIN business_statuses
+            Aggregation.lookup(
+                "business_statuses",
+                "userId",
+                "userId",
+                "businessStatus"
+            ),
+            Aggregation.unwind("businessStatus", true),
 
-        for (UserProfile user : userProfiles) {
+            // 2. JOIN users (role nằm đây)
+            Aggregation.lookup(
+                "users",
+                "userId",
+                "_id",
+                "userAuth"
+            ),
+            Aggregation.unwind("userAuth", true),
 
-            BusinessStatus status = businessStatusService.getBusinessStatusByUserId(user.getUserId());
+            // 3. PROJECT (QUAN TRỌNG)
+            Aggregation.project()
+                .and("userId").as("userProfile.userId")
+                .and("fullName").as("userProfile.fullName")
+                .and("businessStatus").as("businessStatus")
+                .and("userAuth.role").as("role")
+        );
 
-            UserInformation info = new UserInformation();
-            info.setUserProfile(user);
-            info.setBusinessStatus(status);
+        AggregationResults<UserInformation> results =
+                mongoTemplate.aggregate(
+                        aggregation,
+                        "user_profiles", // ⚠️ check tên collection này
+                        UserInformation.class
+                );
 
-            userInformations.add(info);
-        }
+        List<UserInformation> users = results.getMappedResults();
 
-        return new UserListResponse(userInformations.size(), userInformations);
+        return new UserListResponse(users.size(), users);
     }
 }
 

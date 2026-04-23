@@ -17,6 +17,7 @@ public class BusinessStatus {
 
     private boolean isDeactivated;
     private boolean isDeleted;
+    private String role;
 
     public BusinessStatus() {
         this.statusId = UUID.randomUUID();
@@ -29,6 +30,7 @@ public class BusinessStatus {
         this.userId = userId;
         this.isDeactivated = false;
         this.isDeleted = false;
+
     }
 
     // ===== Getter / Setter =====
@@ -63,5 +65,13 @@ public class BusinessStatus {
 
     public void setDeleted(boolean deleted) {
         isDeleted = deleted;
+    }
+    
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
