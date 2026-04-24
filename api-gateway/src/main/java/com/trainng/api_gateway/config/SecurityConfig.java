@@ -29,6 +29,8 @@ public class SecurityConfig {
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/api/users/all", "/api/users/update-role", "/api/users/deactivate-user").hasRole("ADMIN")
                         .pathMatchers("/api/users/profile", "/api/users/upload-avatar", "/api/users/update-profile").authenticated()
+                        .pathMatchers("/api/product/create").hasAnyRole("ADMIN", "MANAGER")
+                        .pathMatchers("/api/product/list").permitAll()
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(ex -> ex
