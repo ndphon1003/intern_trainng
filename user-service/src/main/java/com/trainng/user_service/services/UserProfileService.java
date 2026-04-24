@@ -21,7 +21,6 @@ import com.trainng.user_service.dto.response.AuthInfoResponse;
 import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.RolePatchResponse;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
-import com.trainng.user_service.dto.response.UserInformation;
 import com.trainng.user_service.dto.response.UserListResponse;
 import com.trainng.user_service.models.UserProfile;
 import com.trainng.user_service.repositories.UserProfileRepo;
@@ -88,18 +87,38 @@ public class UserProfileService {
 
         List<UserProfile> userProfiles = userProfileRepo.findAll();
 
-        List<UserInformation> userInformations = new ArrayList<>();
+        List<UserProfile> userInformations = new ArrayList<>();
+
+        List<AuthInfoResponse> authInfoResponses = new ArrayList<>();
 
         for (UserProfile user : userProfiles) {
 
+            String url = "http://localhost:8081/api/auth/info?User-Id=" + user.getUserId();
+            ResponseEntity<ResponseFormat> response =
+                    restTemplate.exchange(
+                            url,
+                            HttpMethod.GET,
+                            null,
+                            new ParameterizedTypeReference<ResponseFormat>() {}
+                    );
 
-            UserInformation info = new UserInformation();
-            info.setUserProfile(user);
+            ResponseFormat format = response.getBody();
 
-            userInformations.add(info);
+            if (format == null || format.getData() == null) {
+                throw new RuntimeException("Auth service returned null response");
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            AuthInfoResponse authInfo =
+                    mapper.convertValue(format.getData(), AuthInfoResponse.class);
+            
+            authInfoResponses.add(authInfo);
+
+            userInformations.add(user);
         }
 
-        return new UserListResponse(userInformations.size(), userInformations);
+        return new UserListResponse(userInformations.size(), userInformations, authInfoResponses);
     }
 
     public RolePatchResponse updateUserRole(UUID userId, String newRole) {
