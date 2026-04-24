@@ -44,6 +44,7 @@ public class AuthController {
     public ResponseEntity<ResponseFormat> login(@RequestBody LoginRequest request) {
         //Validate input
         AuthResponse response = authService.login(request.getUsername(), request.getPassword());
+    
         if (response == null) {
             return ResponseEntity.status(400).body(new ResponseFormat(400, "Invalid username or password", null));
         }
