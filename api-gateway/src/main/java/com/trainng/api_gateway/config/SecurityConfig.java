@@ -31,6 +31,11 @@ public class SecurityConfig {
                         .pathMatchers("/api/users/profile", "/api/users/upload-avatar", "/api/users/update-profile").authenticated()
                         .pathMatchers("/api/product/create").hasAnyRole("ADMIN", "MANAGER")
                         .pathMatchers("/api/product/list").permitAll()
+                        .pathMatchers("/api/product/list-own").hasRole("MANAGER")
+                        .pathMatchers("/api/product/get-all").hasRole("ADMIN")
+                        .pathMatchers("/api/product/detail-public-product").hasAnyRole("CUSTOMER", "MANAGER", "ADMIN")
+                        .pathMatchers("/api/product/detail-own-product", "/api/product/update-product").hasAnyRole("MANAGER", "ADMIN")
+                        .pathMatchers("/api/product/detail-product").hasRole("ADMIN")
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(ex -> ex

@@ -7,13 +7,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.trainng.product_service.dto.request.CreateProductRequest;
+import com.trainng.product_service.dto.request.PatchProductRequest;
 import com.trainng.product_service.dto.response.ListProductResponse;
 import com.trainng.product_service.dto.response.ResponseFormat;
 import com.trainng.product_service.models.Product;
@@ -50,4 +53,110 @@ public class ProductController {
             return ResponseEntity.internalServerError().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "Failed to load products", null));
         }
     }
+
+    @GetMapping("/get-own")
+    ResponseEntity<ResponseFormat> getListProductOwn(@RequestHeader("X-User-Id") UUID ownerId){
+        try {
+            ListProductResponse response = productService.getListOfProductOwn(ownerId);
+            return ResponseEntity.ok(new ResponseFormat(HttpStatus.OK.value(), "Get my products successfully", response));
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "Failed to load products", null));
+
+        }
+    }
+
+    @GetMapping("/get-all")
+    ResponseEntity<ResponseFormat> getAllProducts(@RequestHeader("X-User-Id") UUID ownerId){
+        try {
+            ListProductResponse response = productService.getAllProducts();
+            return ResponseEntity.ok(new ResponseFormat(HttpStatus.OK.value(), "Get all products successfully", response));
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "Failed to load products", null));
+
+        }
+    }
+
+    @GetMapping("/detail-public-product")
+    ResponseEntity<ResponseFormat> getDetailProductPublic(@RequestParam("Product-Id") UUID productId){
+        try {
+            Product product = productService.getDetailProductPublicById(productId);
+            if (product == null){
+                return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "The product was not public or deleted", null));
+            }
+            return ResponseEntity.ok(new ResponseFormat(HttpStatus.OK.value(), "Get details of product successfully", product));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "The product was not existing", null));
+        }
+    }
+
+    @GetMapping("/detail-own-product")
+    ResponseEntity<ResponseFormat> getDetailProductOwn(@RequestHeader("X-User-Id") UUID ownerId, @RequestParam("Product-Id") UUID productId){
+        try {
+            Product product = productService.getDetailProductOwnById(productId, ownerId);
+            if (product == null){
+                return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "You are not the owner", null));
+            }
+            return ResponseEntity.ok(new ResponseFormat(HttpStatus.OK.value(), "Get details of product successfully", product));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "The product was not existing", null));
+        }
+    }
+
+    @GetMapping("/detail-product")
+    ResponseEntity<ResponseFormat> getDetailProductForAdmin(@RequestParam("Product-Id") UUID productId){
+        try {
+            Product product = productService.getDetailProduct(productId);
+            if (product == null){
+                return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "The product was not public or deleted", null));
+            }
+            return ResponseEntity.ok(new ResponseFormat(HttpStatus.OK.value(), "Get details of product successfully", product));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "The product was not existing", null));
+        }
+    }
+
+    @PatchMapping("/update-product")
+    ResponseEntity<ResponseFormat> updateProduct(
+            @RequestBody PatchProductRequest request) {
+
+        try {
+            Product updatedProduct = productService.patchProduct(
+                    request.getProductId(),
+                    request.getName(),
+                    request.getDescription(),
+                    request.getPrice(),
+                    request.isPublic(),
+                    request.isDeleted()
+            );
+
+            return ResponseEntity.ok(
+                    new ResponseFormat(
+                            HttpStatus.OK.value(),
+                            "Update product successfully",
+                            updatedProduct
+                    )
+            );
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(
+                    new ResponseFormat(
+                            HttpStatus.BAD_REQUEST.value(),
+                            e.getMessage(),
+                            null
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    new ResponseFormat(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Failed to update product",
+                            null
+                    )
+            );
+        }
+    }
+    
 }

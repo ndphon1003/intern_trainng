@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Product {
 
     @Id
-    private UUID product_id;
+    private UUID productId;
 
     private String name;
     private String description;
@@ -31,7 +31,7 @@ public class Product {
     //No-args constructor
 // No-args constructor
     public Product() {
-        this.product_id = UUID.randomUUID();      
+        this.productId = UUID.randomUUID();      
         this.price = BigDecimal.ZERO;            
         this.stockQuantity = 0;
         this.isPublic = true;                    
@@ -46,7 +46,7 @@ public class Product {
                    int stockQuantity, boolean isPublic, boolean isDeleted,
                    UUID ownerId, int currentVersion,
                    LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.product_id = product_id;
+        this.productId = product_id;
         this.name = name;
         this.description = description;
         this.price = price;
@@ -62,11 +62,11 @@ public class Product {
     //Getters & Setters
 
     public UUID getProduct_id() {
-        return product_id;
+        return productId;
     }
 
-    public void setProduct_id(UUID product_id) {
-        this.product_id = product_id;
+    public void setProduct_id(UUID productId) {
+        this.productId = productId;
     }
 
     public String getName() {
