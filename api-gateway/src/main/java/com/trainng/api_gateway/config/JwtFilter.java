@@ -31,7 +31,7 @@ public class JwtFilter implements WebFilter {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        if (path.contains("/api/auth")) {
+        if (path.contains("/api/auth") || path.contains("/api/product/list")) {
             return chain.filter(exchange);
         }
 
