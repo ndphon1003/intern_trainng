@@ -19,9 +19,9 @@ import com.trainng.user_service.dto.request.RolePatchRequest;
 import com.trainng.user_service.dto.request.UpdateProfileRequest;
 import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
+import com.trainng.user_service.dto.response.UserInfoResponse;
 import com.trainng.user_service.middlewares.RoleValidate;
 import com.trainng.user_service.middlewares.ValidateResponse;
-import com.trainng.user_service.models.UserProfile;
 import com.trainng.user_service.services.UserProfileService;
 
 @RestController
@@ -57,8 +57,8 @@ public class UserProfileController {
             @RequestHeader("X-User-Id") String userId){
         try {
             
-            UserProfile profile = userProfileService.updateUserProfile(UUID.fromString(userId), request.getFullName(), request.getBio(), request.getPhoneNumber(), request.getAddress(), request.getCity(), request.getCountry());
-            return ResponseEntity.ok(new ResponseFormat(200, "Profile updated successfully", profile));
+            UserInfoResponse userInfoResponse = userProfileService.updateUserProfile(UUID.fromString(userId), request.getFullName(), request.getBio(), request.getPhoneNumber(), request.getAddress(), request.getCity(), request.getCountry());
+            return ResponseEntity.ok(new ResponseFormat(200, "Profile updated successfully", userInfoResponse));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ResponseFormat(500, "Failed to update profile: " + e.getMessage(), null));
         }

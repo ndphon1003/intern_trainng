@@ -21,6 +21,7 @@ import com.trainng.user_service.dto.response.AuthInfoResponse;
 import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.RolePatchResponse;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
+import com.trainng.user_service.dto.response.UserInfoResponse;
 import com.trainng.user_service.dto.response.UserListResponse;
 import com.trainng.user_service.models.UserProfile;
 import com.trainng.user_service.repositories.UserProfileRepo;
@@ -33,14 +34,42 @@ public class UserProfileService {
     private CloudinaryService cloudinaryService;
     @Autowired RestTemplate restTemplate;
 
-    public UserProfile getProfileByUserId(UUID userId) {
+    public UserInfoResponse getProfileByUserId(UUID userId) {
         UserProfile userProfile = userProfileRepo.findByUserId(userId);
         if (userProfile == null) {
             userProfile = new UserProfile();
             userProfile.setUserId(userId);
             userProfileRepo.save(userProfile);
         }
-        return userProfile;
+        String url = "http://localhost:8081/api/auth/info?User-Id=" + userId;
+
+        ResponseEntity<ResponseFormat> response =
+                restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<ResponseFormat>() {}
+                );
+
+        ResponseFormat format = response.getBody();
+
+        if (format == null || format.getData() == null) {
+            throw new RuntimeException("Auth service returned null response");
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        AuthInfoResponse authInfo =
+                mapper.convertValue(format.getData(), AuthInfoResponse.class);
+
+        if (authInfo.isDeleted() || authInfo.isDeactivate()) {
+            throw new RuntimeException("User is not active");
+        }
+
+        UserInfoResponse userInfoResponse = new UserInfoResponse();
+        userInfoResponse.setAuthInfoResponse(authInfo);
+        userInfoResponse.setUserProfile(userProfile);
+        return userInfoResponse;
     }
 
     public UploadAvatarResponse uploadAvatar(UUID userId, MultipartFile avatar) throws Exception {
@@ -55,8 +84,35 @@ public class UserProfileService {
         return new UploadAvatarResponse(avatarUrl, userId);
     }
     
-    public UserProfile updateUserProfile(UUID userId, String fullName, String bio, String phoneNumber,
+    public UserInfoResponse updateUserProfile(UUID userId, String fullName, String bio, String phoneNumber,
             String address, String city, String country) {
+
+        String url = "http://localhost:8081/api/auth/info?User-Id=" + userId;
+
+        ResponseEntity<ResponseFormat> response =
+                restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<ResponseFormat>() {}
+                );
+
+        ResponseFormat format = response.getBody();
+
+        if (format == null || format.getData() == null) {
+            throw new RuntimeException("Auth service returned null response");
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        AuthInfoResponse authInfo =
+                mapper.convertValue(format.getData(), AuthInfoResponse.class);
+
+        if (authInfo.isDeleted() || authInfo.isDeactivate()) {
+            throw new RuntimeException("User is not active");
+        }
+
+
         UserProfile userProfile = userProfileRepo.findByUserId(userId);
         if (userProfile == null) {
             userProfile = new UserProfile();
@@ -80,7 +136,12 @@ public class UserProfileService {
         if (country != null) {
             userProfile.setCountry(country);
         }
-        return userProfileRepo.save(userProfile);
+        UserProfile savedUserProfile = userProfileRepo.save(userProfile);
+        UserInfoResponse userInfoResponse = new UserInfoResponse();
+        userInfoResponse.setUserProfile(savedUserProfile);
+        userInfoResponse.setAuthInfoResponse(authInfo);
+
+        return userInfoResponse;
     }
 
     public UserListResponse getAllUserProfiles() {
