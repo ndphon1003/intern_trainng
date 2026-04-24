@@ -33,4 +33,39 @@ public class ProductService {
 
         return new ListProductResponse(products.size(), products);
     }
+
+    public ListProductResponse getListOfProductOwn(UUID ownerId){
+        List<Product> products = productRepo.findByOwnerIdAndIsDeletedFalse(ownerId);
+
+        return new ListProductResponse(products.size(), products);
+    }
+
+    public ListProductResponse getAllProducts(){
+        List<Product> products = productRepo.findAll();
+
+        return new ListProductResponse(products.size(), products);
+    }
+
+    public Product getDetailProductPublicById(UUID productId){
+        Product product = productRepo.findByProductId(productId);
+        if (!product.isPublic() || product.isDeleted()){
+            return null;
+        }
+        return product;
+    }
+
+    public Product getDetailProductOwnById(UUID productId, UUID ownerId){
+        Product product = productRepo.findByProductId(productId);
+
+        if (!ownerId.equals(product.getOwnerId())){
+            return null;
+        }
+        return product;
+    }
+
+    public Product getDetailProduct(UUID productId){
+        Product product = productRepo.findByProductId(productId);
+
+        return product;
+    }
 }

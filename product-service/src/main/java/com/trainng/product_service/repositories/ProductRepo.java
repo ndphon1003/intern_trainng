@@ -11,5 +11,6 @@ import com.trainng.product_service.models.Product;
 @Repository
 public interface ProductRepo extends  MongoRepository<Product, UUID>{
     List<Product> findByIsPublicTrueAndIsDeletedFalse();
-    
+    List<Product> findByOwnerIdAndIsDeletedFalse(UUID ownerId);
+    Product findByProductId(UUID productId);
 }
