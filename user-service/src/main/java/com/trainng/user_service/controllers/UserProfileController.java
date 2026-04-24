@@ -21,9 +21,7 @@ import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
 import com.trainng.user_service.middlewares.RoleValidate;
 import com.trainng.user_service.middlewares.ValidateResponse;
-import com.trainng.user_service.models.BusinessStatus;
 import com.trainng.user_service.models.UserProfile;
-import com.trainng.user_service.services.BusinessStatusService;
 import com.trainng.user_service.services.UserProfileService;
 
 @RestController
@@ -32,8 +30,7 @@ public class UserProfileController {
     
     @Autowired
     private UserProfileService userProfileService;
-    @Autowired
-    private BusinessStatusService businessStatusService;
+
 
     @GetMapping("/profile")
     public ResponseEntity<ResponseFormat> getUserProfile(@RequestHeader("X-User-Id") String userId) {
@@ -124,10 +121,9 @@ public class UserProfileController {
     public ResponseEntity<ResponseFormat> deactivateUser(@RequestBody DeactivateRequest request) {
 
         try {
-            BusinessStatus result = businessStatusService.deactivateUser(request.getUserId());
 
             return ResponseEntity.ok(
-                new ResponseFormat(200, "User deactivated successfully", result)
+                new ResponseFormat(200, "User deactivated successfully", null)
             );
 
         } catch (Exception e) {
