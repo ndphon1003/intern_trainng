@@ -1,16 +1,23 @@
 package com.trainng.auth_service.controller;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.trainng.auth_service.dto.request.LoginRequest;
 import com.trainng.auth_service.dto.request.LogoutRequest;
 import com.trainng.auth_service.dto.request.RefreshTokenRequest;
 import com.trainng.auth_service.dto.request.RegisterRequest;
+import com.trainng.auth_service.dto.request.RoleUpdateRequest;
+import com.trainng.auth_service.dto.response.AuthInfoResponse;
 import com.trainng.auth_service.dto.response.AuthResponse;
 import com.trainng.auth_service.dto.response.ResponseFormat;
 import com.trainng.auth_service.middlewares.RegisterValidate;
@@ -46,7 +53,7 @@ public class AuthController {
         AuthResponse response = authService.login(request.getUsername(), request.getPassword());
     
         if (response == null) {
-            return ResponseEntity.status(400).body(new ResponseFormat(400, "Invalid username or password", null));
+            return ResponseEntity.status(400).body(new ResponseFormat(400, "Loggin forbidden", null));
         }
         return ResponseEntity.ok(new ResponseFormat(200, "User logged in successfully", response));
     }
@@ -69,4 +76,38 @@ public class AuthController {
         return ResponseEntity.ok(new ResponseFormat(200, "Token refreshed successfully", response));
     }
 
+    @GetMapping("/info")
+    public ResponseEntity<ResponseFormat> getAuthInfo(@RequestParam("User-Id") UUID userId){
+        try {
+            AuthInfoResponse response = authService.getAuthInfor(userId);
+            return ResponseEntity.ok(new ResponseFormat(200, "Get auth info successfully", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(new ResponseFormat(400, "Invalid user", null));
+        }
+    }
+
+    @PatchMapping("/role")
+    public ResponseEntity<ResponseFormat> updateUserRole(
+            @RequestBody RoleUpdateRequest request
+    ) {
+        try {
+            AuthInfoResponse response = authService.updateUserRole(request.getUserId(), request.getRole());
+
+            if (response == null) {
+                return ResponseEntity.status(400)
+                        .body(new ResponseFormat(400, "User not found or inactive", null));
+            }
+
+            return ResponseEntity.ok(
+                    new ResponseFormat(200, "Update role successfully", response)
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400)
+                    .body(new ResponseFormat(400, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(new ResponseFormat(500, "Internal server error", null));
+        }
+    }
 }
