@@ -36,6 +36,12 @@ public class SecurityConfig {
                         .pathMatchers("/api/product/detail-public-product").hasAnyRole("CUSTOMER", "MANAGER", "ADMIN")
                         .pathMatchers("/api/product/detail-own-product", "/api/product/update-product").hasAnyRole("MANAGER", "ADMIN")
                         .pathMatchers("/api/product/detail-product").hasRole("ADMIN")
+                        .pathMatchers(
+                            "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**"
+                        ).permitAll()
+
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(ex -> ex

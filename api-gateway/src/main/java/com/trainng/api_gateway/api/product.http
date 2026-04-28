@@ -1,0 +1,59 @@
+@access_token=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6Ijk2ZjhiODIxLThhODUtNDFlNy04ZDU2LWM1Y2FkMWMwY2U1OSIsImlhdCI6MTc3NzM1Mzg0OCwiZXhwIjoxNzc3MzU3NDQ4fQ.Bi61_ZR6xg0RNoaVEQZnh4EV6EW_B3nh_zI4hd_0HN_qRJCeEGd8BlHNeiicth3Z
+@access_token_customer=3
+
+### Create Product API
+POST http://localhost:8080/api/product/create
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+{
+  "name": "iPhone 18",
+  "description": "Latest Apple phone",
+  "price": 35000000,
+  "stockQuantity": 10
+}
+
+### Get list of public product
+GET http://localhost:8080/api/product/list
+X-Internal-Key: super-secret-key-123
+
+### Get own's list of product
+GET http://localhost:8080/api/product/get-own
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+### Admin get all products
+GET http://localhost:8080/api/product/get-all
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+### get public product's detail
+GET http://localhost:8080/api/product/detail-public-product?Product-Id=7ee42329-0556-4236-a599-1f1c395f530b
+X-Internal-Key: super-secret-key-123
+Authorization: Bearer {{access_token}}
+
+### get own product detail
+GET http://localhost:8080/api/product/detail-own-product?Product-Id=7ee42329-0556-4236-a599-1f1c395f530b
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+### admin get detail product
+GET http://localhost:8080/api/product/detail-product?Product-Id=9d1787f0-43f7-450d-89ac-759720d7724e
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+### Update product
+PATCH http://localhost:8080/api/product/update-product
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+{
+  "productId": "9d1787f0-43f7-450d-89ac-759720d7724e",
+  "name": "New product name 1",
+  "description": "Updated description",
+  "price": 199.99,
+  "public": true,
+  "deleted": false
+}

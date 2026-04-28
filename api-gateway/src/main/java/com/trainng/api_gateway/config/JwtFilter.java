@@ -37,6 +37,8 @@ public class JwtFilter implements WebFilter {
             return chain.filter(exchange);
         }
 
+
+
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

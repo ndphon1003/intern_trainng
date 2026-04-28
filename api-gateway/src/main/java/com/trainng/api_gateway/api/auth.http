@@ -1,0 +1,55 @@
+@access_token=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbjEiLCJyb2xlIjoiTUFOQUdFUiIsInVzZXJJZCI6ImIxNzA5YTNhLWUwMTUtNDc1YS05NzE0LTA3ZWM2MWViNTA4OCIsImlhdCI6MTc3NzM0MTQ4OSwiZXhwIjoxNzc3MzQ1MDg5fQ.UsE-suGYRNowUiVWEIVR0eSyqtheeBzWjNha09KVej_GmYA3yrikFDGKX0-1CWG8
+@secret_key=super-secret-key-123
+### REGISTER USER
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+X-Internal-Key: {{secret_key}}
+
+{
+  "username": "customer12",
+  "email": "customer12@gmail.com",
+  "password": "123456",
+  "role": "CUSTOMER"
+}
+
+### Login API with secret key
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+X-Internal-Key: {{secret_key}}
+
+{
+  "username": "admin",
+  "password": "123456"
+}
+### Logout API
+POST http://localhost:8080/api/auth/logout
+Content-Type: application/json
+X-Internal-Key: {{secret_key}}
+
+{
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbjEiLCJyb2xlIjoiTUFOQUdFUiIsInVzZXJJZCI6ImIxNzA5YTNhLWUwMTUtNDc1YS05NzE0LTA3ZWM2MWViNTA4OCIsImlhdCI6MTc3NzM0NTM3MywiZXhwIjoxNzc3NDMxNzczfQ.2a6Tt3V5jsgLgNFiPcVfQICWrL3LyWZVtqtzweO_vvazhUZURw1-RiMqMZ9_DA8F"
+}
+
+### Refresh Token API
+POST http://localhost:8080/api/auth/refresh-token
+Content-Type: application/json
+X-Internal-Key: {{secret_key}}
+
+{
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NjkxODgwNSwiZXhwIjoxNzc3MDA1MjA1fQ.vv3FVilYt-RkZFko-TwoOyZzXfJU708-E0A6qo1f9fOBuBr1AGkLYUTB8ET3OmLC"
+}
+
+### Get info
+GET http://localhost:8080/api/auth/info?User-Id=96f8b821-8a85-41e7-8d56-c5cad1c0ce59
+X-Internal-Key: {{secret_key}}
+
+### Update Role
+PATCH http://localhost:8080/api/auth/role
+X-Internal-Key: {{secret_key}}
+Content-Type: application/json
+
+{
+  "userId": "b1709a3a-e015-475a-9714-07ec61eb5088",
+  "role": "MANAGER"
+}
+

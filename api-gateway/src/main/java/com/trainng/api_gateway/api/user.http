@@ -1,0 +1,52 @@
+@access_token=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6Ijk2ZjhiODIxLThhODUtNDFlNy04ZDU2LWM1Y2FkMWMwY2U1OSIsImlhdCI6MTc3NzM2MjI1MCwiZXhwIjoxNzc3MzY1ODUwfQ.8gJ27m3COYfrfcrDro1JJntmCt3qScg7reloM9D1LmF3C3m8eH_EyJg-6WDRpCFv
+@access_token_customer=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjdXN0b21lcjEiLCJyb2xlIjoiQ1VTVE9NRVIiLCJ1c2VySWQiOiJhZDViMWQ2Yy00ZDcwLTQzYjEtYWQzOC00YTAzN2I0MGE0NTQiLCJpYXQiOjE3NzczNDk2NDMsImV4cCI6MTc3NzM1MzI0M30.8KSe4dnXfSKrBHZjDsS00OvrU_TSMVgJ4KtWvhLp3RvdyR-4HkdeCy3r6-faZnaC
+@access_token_manager=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbjEiLCJyb2xlIjoiTUFOQUdFUiIsInVzZXJJZCI6ImIxNzA5YTNhLWUwMTUtNDc1YS05NzE0LTA3ZWM2MWViNTA4OCIsImlhdCI6MTc3NzAyNDYxNCwiZXhwIjoxNzc3MDI4MjE0fQ.sMhhWzJdQEhRNVDTXLJVctlo7pwYBEp17M_EdhWeDn-5jzaHVvD4G1mBJxHAEThy
+
+
+### Get user profile
+GET http://localhost:8080/api/users/profile
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+### Update user profile
+PATCH http://localhost:8080/api/users/update-profile
+Authorization: Bearer {{access_token_customer}}
+X-Internal-Key: super-secret-key-123
+X-User-Id: 7c8795a9-1471-4a65-b64f-d452249a0bcb
+Content-Type: application/json
+
+{
+  "phoneNumber": "0123456789",
+  "fullName": "Phon"
+
+}
+
+### GET list user
+GET http://localhost:8080/api/users/all
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+### change role
+PATCH http://localhost:8080/api/users/update-role
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+{
+  "userId": "b1709a3a-e015-475a-9714-07ec61eb5088",
+  "newRole": "ADMIN"
+}
+
+### Deactivate user
+PATCH http://localhost:8080/api/users/deactivate-user
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+X-Internal-Key: super-secret-key-123
+
+{
+  "userId": "0df72b8a-c4e2-4c50-97c0-50ca98ae9545"
+}
+
+###
+GET http://localhost:8080/swagger-ui.html
+Authorization: Bearer {{access_token}}
