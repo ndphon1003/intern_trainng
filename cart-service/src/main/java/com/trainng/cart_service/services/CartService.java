@@ -1,5 +1,6 @@
 package com.trainng.cart_service.services;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,5 +38,11 @@ public class CartService {
 
         cartEventProducerService.sendCartEvent(event);
         return savedCart;
+    }
+
+    public List<Cart> getListOfCarts(UUID userId){
+        List<Cart> carts = cartRepo.findAll();
+
+        return carts;
     }
 }
