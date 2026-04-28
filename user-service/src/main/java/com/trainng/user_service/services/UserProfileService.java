@@ -22,6 +22,7 @@ import com.trainng.user_service.dto.response.ResponseFormat;
 import com.trainng.user_service.dto.response.RolePatchResponse;
 import com.trainng.user_service.dto.response.UploadAvatarResponse;
 import com.trainng.user_service.dto.response.UserInfoResponse;
+import com.trainng.user_service.dto.response.UserInformation;
 import com.trainng.user_service.dto.response.UserListResponse;
 import com.trainng.user_service.models.UserProfile;
 import com.trainng.user_service.repositories.UserProfileRepo;
@@ -148,7 +149,7 @@ public class UserProfileService {
 
         List<UserProfile> userProfiles = userProfileRepo.findAll();
 
-        List<UserProfile> userInformations = new ArrayList<>();
+        List<UserInformation> userInformations = new ArrayList<>();
 
         List<AuthInfoResponse> authInfoResponses = new ArrayList<>();
 
@@ -174,12 +175,15 @@ public class UserProfileService {
             AuthInfoResponse authInfo =
                     mapper.convertValue(format.getData(), AuthInfoResponse.class);
             
-            authInfoResponses.add(authInfo);
+            UserInformation userInfo = new UserInformation();
+            userInfo.setAuthInfoResponse(authInfo);
+            userInfo.setUserProfile(user);
+            
 
-            userInformations.add(user);
+            userInformations.add(userInfo);
         }
 
-        return new UserListResponse(userInformations.size(), userInformations, authInfoResponses);
+        return new UserListResponse(userInformations.size(), userInformations);
     }
 
     public RolePatchResponse updateUserRole(UUID userId, String newRole) {

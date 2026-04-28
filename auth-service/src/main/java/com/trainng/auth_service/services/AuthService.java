@@ -38,7 +38,7 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateToken(user.getUserId(), username, role, false);
         String refreshToken = jwtUtil.generateToken(user.getUserId(), username, role, true);
-
+        System.out.println(accessToken);
         RefreshToken refreshTokenEntity = new RefreshToken();
         refreshTokenEntity.setToken(refreshToken);
         refreshTokenEntity.setUserId(user.getUserId());
