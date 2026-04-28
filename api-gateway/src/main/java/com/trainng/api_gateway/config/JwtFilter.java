@@ -24,26 +24,17 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class JwtFilter implements WebFilter {
-
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-
         String path = exchange.getRequest().getURI().getPath();
-
-        if (path.contains("/api/auth") || path.contains("/api/product/list")) {
-            return chain.filter(exchange);
-        }
-
-
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+            return chain.filter(exchange); 
         }
 
         try {
@@ -54,7 +45,6 @@ public class JwtFilter implements WebFilter {
             String role = claims.get("role", String.class);
             UUID userId = UUID.fromString(claims.get("userId", String.class));
 
-            // Inject headers
             HttpHeaders newHeaders = new HttpHeaders();
             exchange.getRequest().getHeaders().forEach(newHeaders::put);
             newHeaders.set("X-User-Id", userId.toString());
@@ -72,7 +62,6 @@ public class JwtFilter implements WebFilter {
                     .request(mutatedRequest)
                     .build();
 
-            // Set authentication — SecurityConfig sẽ tự xử lý phân quyền
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             username,
@@ -84,21 +73,21 @@ public class JwtFilter implements WebFilter {
                     .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
 
         } catch (ExpiredJwtException e) {
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().writeWith(
-                    Mono.just(exchange.getResponse()
-                        .bufferFactory()
-                        .wrap("Token expired".getBytes()))
-                );
-
-            } catch (JwtException | IllegalArgumentException e) {
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().writeWith(
-                    Mono.just(exchange.getResponse()
-                        .bufferFactory()
-                        .wrap("Invalid token".getBytes()))
-                );
-            }
+            // ✅ Token hết hạn → vẫn nên báo rõ lỗi này
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().writeWith(
+                Mono.just(exchange.getResponse()
+                    .bufferFactory()
+                    .wrap("{\"status\":401,\"message\":\"Token expired\"}".getBytes()))
+            );
+        } catch (JwtException | IllegalArgumentException e) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().writeWith(
+                Mono.just(exchange.getResponse()
+                    .bufferFactory()
+                    .wrap("{\"status\":401,\"message\":\"Invalid token\"}".getBytes()))
+            );
+        }
     }
 
     private Claims parseToken(String token) {

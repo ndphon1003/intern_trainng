@@ -1,4 +1,4 @@
-@access_token=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6Ijk2ZjhiODIxLThhODUtNDFlNy04ZDU2LWM1Y2FkMWMwY2U1OSIsImlhdCI6MTc3NzM1Mzg0OCwiZXhwIjoxNzc3MzU3NDQ4fQ.Bi61_ZR6xg0RNoaVEQZnh4EV6EW_B3nh_zI4hd_0HN_qRJCeEGd8BlHNeiicth3Z
+@access_token=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6Ijk2ZjhiODIxLThhODUtNDFlNy04ZDU2LWM1Y2FkMWMwY2U1OSIsImlhdCI6MTc3NzM2OTUxNSwiZXhwIjoxNzc3MzczMTE1fQ.R1CoFtFO3vjJcCDRPnp3uQVQ4VF22NBDCjdEDSzkjfYCeIEdEFBWlHGeS89gS6Ds
 @access_token_customer=3
 
 ### Create Product API
@@ -39,7 +39,7 @@ Authorization: Bearer {{access_token}}
 X-Internal-Key: super-secret-key-123
 
 ### admin get detail product
-GET http://localhost:8080/api/product/detail-product?Product-Id=9d1787f0-43f7-450d-89ac-759720d7724e
+GET http://localhost:8080/api/product/detail-product?Product-Id=2a125423-01ed-4b4e-abd7-05f4f22dc130
 Authorization: Bearer {{access_token}}
 X-Internal-Key: super-secret-key-123
 
