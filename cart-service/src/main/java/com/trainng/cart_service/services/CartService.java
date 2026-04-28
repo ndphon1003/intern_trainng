@@ -59,7 +59,7 @@ public class CartService {
     }
 
     public List<Cart> getListOfCarts(UUID userId){
-        List<Cart> carts = cartRepo.findAll();
+        List<Cart> carts = cartRepo.findByUserId(userId);
 
         return carts;
     }
