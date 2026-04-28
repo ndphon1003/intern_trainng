@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.trainng.auth_service.config.JwtUtil;
+import com.trainng.auth_service.dto.response.AuthInfoResponse;
 import com.trainng.auth_service.dto.response.AuthResponse;
 import com.trainng.auth_service.models.RefreshToken;
 import com.trainng.auth_service.models.Users;
@@ -67,6 +68,10 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(password, user.getPassword_hashed())) {
+            return null;
+        }
+
+        if (user.isDeactivate() || user.isDeleted()){
             return null;
         }
 
@@ -145,5 +150,62 @@ public class AuthService {
         authResponse.setEmail(user.getEmail());
         authResponse.setRole(user.getRole());
         return authResponse;
+    }
+
+    public AuthInfoResponse getAuthInfor(UUID userId){
+        Users user = userRepo.findByUserId(userId).orElse(null);
+        if (user == null){
+            return null;
+        }
+
+        AuthInfoResponse response = new AuthInfoResponse();
+        response.setUsername(user.getUsername());
+        response.setRole(user.getRole());
+        response.setEmail(user.getEmail());
+        response.setDeactivate(user.isDeactivate());
+        response.setDeleted(user.isDeleted());
+
+        return response;
+
+    }
+
+    public AuthInfoResponse updateUserRole(UUID userId, String role) {
+
+        Users user = userRepo.findByUserId(userId).orElse(null);
+
+        if (user == null) {
+            return null;
+        }
+
+        if (user.isDeleted() || user.isDeactivate()) {
+            return null;
+        }
+
+        // ===== VALIDATE ROLE =====
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("Role cannot be null or empty");
+        }
+
+        String normalizedRole = role.toUpperCase();
+
+        if (!normalizedRole.equals("CUSTOMER")
+                && !normalizedRole.equals("ADMIN")
+                && !normalizedRole.equals("MANAGER")) {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
+
+        // ===== UPDATE ROLE =====
+        user.setRole(normalizedRole);
+        userRepo.save(user);
+
+        // ===== RESPONSE =====
+        AuthInfoResponse response = new AuthInfoResponse();
+        response.setUsername(user.getUsername());
+        response.setRole(user.getRole());
+        response.setEmail(user.getEmail());
+        response.setDeactivate(user.isDeactivate());
+        response.setDeleted(user.isDeleted());
+
+        return response;
     }
 }

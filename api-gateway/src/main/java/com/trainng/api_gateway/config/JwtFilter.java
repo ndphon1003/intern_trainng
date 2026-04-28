@@ -16,6 +16,8 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import reactor.core.publisher.Mono;
@@ -79,10 +81,22 @@ public class JwtFilter implements WebFilter {
             return chain.filter(modifiedExchange)
                     .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
 
-        } catch (Exception e) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
+        } catch (ExpiredJwtException e) {
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().writeWith(
+                    Mono.just(exchange.getResponse()
+                        .bufferFactory()
+                        .wrap("Token expired".getBytes()))
+                );
+
+            } catch (JwtException | IllegalArgumentException e) {
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().writeWith(
+                    Mono.just(exchange.getResponse()
+                        .bufferFactory()
+                        .wrap("Invalid token".getBytes()))
+                );
+            }
     }
 
     private Claims parseToken(String token) {

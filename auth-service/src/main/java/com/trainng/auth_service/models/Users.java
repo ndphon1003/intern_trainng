@@ -18,18 +18,37 @@ public class Users {
     @Indexed(unique = true)
     private String username;
     private String role; //"CUSTOMER", "ADMIN", "MANAGER"
+    private boolean isDeactivate;
+    private boolean isDeleted;
 
     private LocalDateTime createdAt;
 
     public Users() {
         this.userId = UUID.randomUUID();
         this.createdAt = LocalDateTime.now();
+        this.isDeactivate = false;
+        this.isDeleted = false;
     }
     public Users(String email, String password_hashed, String username, String role) {
         this.email = email;
         this.password_hashed = password_hashed;
         this.username = username;
         this.role = role;
+    }
+
+    public void setDeactivate(boolean isDeactivate){
+        this.isDeactivate = isDeactivate;
+    }
+
+    public void setDeleted(boolean isDeleted){
+        this.isDeleted = isDeleted;
+    }
+
+    public boolean isDeactivate(){
+        return isDeactivate;
+    }
+    public boolean isDeleted(){
+        return isDeleted;
     }
 
     public UUID getUserId() {
