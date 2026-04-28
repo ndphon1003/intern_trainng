@@ -36,8 +36,26 @@ public class CartService {
 
         System.out.println(event.getEventType());
 
-        cartEventProducerService.sendCartEvent(event);
+        cartEventProducerService.sendCartEvent(event, "add-cart-event");
         return savedCart;
+    }
+
+    public void removeProductFromCart(UUID cartId, UUID userId){
+        Cart cart = cartRepo.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        if (!cart.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized: user does not own this cart");
+        }
+
+        CartEvent event = new CartEvent();
+        event.setEventType("REMOVE_CART");
+        event.setProductId(cart.getProductId().toString());
+        event.setUserId(cart.getUserId().toString());
+        event.setQuantity(cart.getQuantity());
+
+        cartRepo.deleteById(cartId);
+        cartEventProducerService.sendCartEvent(event, "remove-cart-event");
     }
 
     public List<Cart> getListOfCarts(UUID userId){

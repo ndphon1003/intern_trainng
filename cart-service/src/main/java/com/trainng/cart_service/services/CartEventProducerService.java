@@ -15,12 +15,12 @@ public class CartEventProducerService {
         this.sqsTemplate = sqsTemplate;
     }
 
-    public void sendCartEvent(CartEvent event) {
+    public void sendCartEvent(CartEvent event, String queueName) {
 
         System.out.println(event.getEventType());
 
         sqsTemplate.send(to ->
-                to.queue("add-cart-event")
+                to.queue(queueName)
                 .payload(event)
         );
         System.out.println(">>> AFTER SEND SQS");
