@@ -1,5 +1,7 @@
 package com.trainng.api_gateway.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,13 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(request -> {
+                    var config = new org.springframework.web.cors.CorsConfiguration();
+                    config.setAllowedOrigins(List.of("*"));
+                    config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
+                    config.setAllowedHeaders(List.of("*"));
+                    return config;
+                }))
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/api/users/all", "/api/users/update-role", "/api/users/deactivate-user").hasRole("ADMIN")
@@ -36,6 +45,17 @@ public class SecurityConfig {
                         .pathMatchers("/api/product/detail-public-product").hasAnyRole("CUSTOMER", "MANAGER", "ADMIN")
                         .pathMatchers("/api/product/detail-own-product", "/api/product/update-product").hasAnyRole("MANAGER", "ADMIN")
                         .pathMatchers("/api/product/detail-product").hasRole("ADMIN")
+                        .pathMatchers(
+                            "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/auth/v3/api-docs/**",
+                            "/user/v3/api-docs/**",
+                            "/product/v3/api-docs/**",
+                            "/cart/v3/api-docs/**",
+                            "/webjars/**"
+                        ).permitAll()
+
                         .anyExchange().authenticated()
                 )
                 .exceptionHandling(ex -> ex

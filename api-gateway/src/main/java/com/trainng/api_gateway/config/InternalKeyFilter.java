@@ -25,6 +25,18 @@ public class InternalKeyFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         
         String path = exchange.getRequest().getURI().getPath();
+        
+        if (path.contains("/api/auth") || path.contains("/api/product/list")) {
+            return chain.filter(exchange);
+        }
+
+        // Thêm đủ các swagger paths
+        if (path.startsWith("/swagger-ui")
+                || path.equals("/swagger-ui.html")
+                || path.contains("/v3/api-docs")  
+                || path.startsWith("/webjars")) {
+            return chain.filter(exchange);
+        }
 
         String key = exchange.getRequest().getHeaders().getFirst("X-Internal-Key");
 

@@ -1,0 +1,22 @@
+@CUSTOMER_TOKEN=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6Ijk2ZjhiODIxLThhODUtNDFlNy04ZDU2LWM1Y2FkMWMwY2U1OSIsImlhdCI6MTc3NzM2OTUxNSwiZXhwIjoxNzc3MzczMTE1fQ.R1CoFtFO3vjJcCDRPnp3uQVQ4VF22NBDCjdEDSzkjfYCeIEdEFBWlHGeS89gS6Ds
+
+### Add product to cart
+POST http://localhost:8080/api/cart/add
+Content-Type: application/json
+Authorization: Bearer {{CUSTOMER_TOKEN}}
+X-Internal-Key: super-secret-key-123
+
+{
+  "productId": "d52d601a-10e0-48e3-9fdb-478e29a7757f",
+  "quantity": 2
+}
+
+### Get list
+GET http://localhost:8080/api/cart/list
+Authorization: Bearer {{CUSTOMER_TOKEN}}
+X-Internal-Key: super-secret-key-123
+
+### remove item
+DELETE http://localhost:8080/api/cart/delete?cartId=
+Authorization: Bearer {{CUSTOMER_TOKEN}}
+X-Internal-Key: super-secret-key-123
