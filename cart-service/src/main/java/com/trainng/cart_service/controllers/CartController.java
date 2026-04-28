@@ -1,0 +1,54 @@
+package com.trainng.cart_service.controllers;
+
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.trainng.cart_service.dto.request.AddCartRequest;
+import com.trainng.cart_service.dto.response.ResponseFormat;
+import com.trainng.cart_service.models.Cart;
+import com.trainng.cart_service.services.CartService;
+
+@RestController
+@RequestMapping("/api/cart")
+public class CartController {
+
+    @Autowired
+    private CartService cartService;
+    
+    @PostMapping("/add")
+    public ResponseEntity<ResponseFormat> addCartRoute(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestBody AddCartRequest request) {
+
+        try {
+            UUID userUUID = UUID.fromString(userId);
+            UUID productUUID = UUID.fromString(request.getProductId());
+
+            Cart cart = cartService.addProductToCart(
+                    userUUID,
+                    productUUID,
+                    request.getQuantity()
+            );
+
+            return ResponseEntity.ok(
+                    new ResponseFormat(HttpStatus.OK.value(), "Add product to cart successfully", cart)
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseFormat(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null));
+        }
+    }
+}
