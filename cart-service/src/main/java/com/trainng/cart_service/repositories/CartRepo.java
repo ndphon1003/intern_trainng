@@ -1,5 +1,6 @@
 package com.trainng.cart_service.repositories;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,4 +12,5 @@ import com.trainng.cart_service.models.Cart;
 @Repository
 public interface CartRepo extends MongoRepository<Cart, UUID>{
     Optional<Cart> findById(UUID id);
+    List<Cart> findByUserId(UUID userId);
 }
