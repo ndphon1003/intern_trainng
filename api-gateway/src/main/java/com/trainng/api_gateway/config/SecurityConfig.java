@@ -27,13 +27,7 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(request -> {
-                    var config = new org.springframework.web.cors.CorsConfiguration();
-                    config.setAllowedOrigins(List.of("*"));
-                    config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
-                    config.setAllowedHeaders(List.of("*"));
-                    return config;
-                }))
+                .cors(ServerHttpSecurity.CorsSpec::disable)
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/api/users/all", "/api/users/update-role", "/api/users/deactivate-user").hasRole("ADMIN")
