@@ -35,6 +35,7 @@ public class UserProfileController {
     @GetMapping("/profile")
     public ResponseEntity<ResponseFormat> getUserProfile(@RequestHeader("X-User-Id") String userId) {
         var profile = userProfileService.getProfileByUserId(UUID.fromString(userId));
+        System.out.println("profile called");
         if (profile == null) {
             return ResponseEntity.status(404).body(new ResponseFormat(404, "User profile not found", null));
         }

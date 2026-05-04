@@ -75,6 +75,7 @@ public class CartController {
     }
 
     @DeleteMapping("/delete")
+    
     public ResponseEntity<ResponseFormat> removeCartItem(
             @RequestHeader("X-User-Id") String userId,
             @RequestParam("cartId") String cartId

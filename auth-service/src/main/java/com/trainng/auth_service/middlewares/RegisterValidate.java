@@ -26,11 +26,11 @@ public class RegisterValidate {
         }
 
         if (isEmailTaken(email)) {
-            return new ValidateResponse(HttpStatus.BAD_REQUEST.value(), "Email already exists");
+            return new ValidateResponse(409, "Email already exists");
         }
 
         if (isUsernameTaken(username)) {
-            return new ValidateResponse(HttpStatus.BAD_REQUEST.value(), "Username already exists");
+            return new ValidateResponse(409, "Username already exists");
         }
 
         if (!role.equals("CUSTOMER") && !role.equals("MANAGER") && !role.equals("ADMIN")) {
