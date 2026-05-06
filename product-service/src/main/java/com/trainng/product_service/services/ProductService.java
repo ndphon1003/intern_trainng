@@ -71,64 +71,83 @@ public class ProductService {
         return product;
     }
 
-public Product patchProduct(UUID productId,
-                            String name,
-                            String description,
-                            BigDecimal price,
-                            Boolean isPublic,
-                            Boolean isDeleted) {
+    public Product updateQuantityProduct(UUID productId, int quantity){
+        Product product = productRepo.findByProductId(productId);
 
-    Product product = productRepo.findByProductId(productId);
+        if (product == null){
+            throw new RuntimeException("Product not found");
+        }
+        
+        if (quantity > product.getStockQuantity()){
+            throw new IllegalArgumentException("Requested quantity exceeds available stock"); 
+        }
 
-    if (product == null) {
-        throw new RuntimeException("Product not found");
+        product.setStockQuantity(product.getStockQuantity() - quantity);
+
+        Product saveProduct = productRepo.save(product);
+        
+        return saveProduct;
     }
 
-    boolean isUpdated = false;
+    public Product patchProduct(UUID productId,
+                                String name,
+                                String description,
+                                BigDecimal price,
+                                Boolean isPublic,
+                                Boolean isDeleted) {
 
-    // NAME
-    if (name != null && !name.isBlank()
-            && !name.equals(product.getName())) {
-        product.setName(name);
-        isUpdated = true;
+        Product product = productRepo.findByProductId(productId);
+
+        if (product == null) {
+            throw new RuntimeException("Product not found");
+        }
+
+        boolean isUpdated = false;
+
+        // NAME
+        if (name != null && !name.isBlank()
+                && !name.equals(product.getName())) {
+            product.setName(name);
+            isUpdated = true;
+        }
+
+        // DESCRIPTION
+        if (description != null && !description.isBlank()
+                && !description.equals(product.getDescription())) {
+            product.setDescription(description);
+            isUpdated = true;
+        }
+
+        // PRICE
+        if (price != null
+                && price.compareTo(BigDecimal.ZERO) > 0
+                && (product.getPrice() == null || price.compareTo(product.getPrice()) != 0)) {
+            product.setPrice(price);
+            isUpdated = true;
+        }
+
+        // IS PUBLIC
+        if (isPublic != null
+                && isPublic != product.isPublic()) {
+            product.setPublic(isPublic);
+            isUpdated = true;
+        }
+
+        // IS DELETED
+        if (isDeleted != null
+                && isDeleted != product.isDeleted()) {
+            product.setDeleted(isDeleted);
+            isUpdated = true;
+        }
+
+        if (isUpdated) {
+            product.setUpdatedAt(LocalDateTime.now());
+            product.setCurrentVersion(product.getCurrentVersion() + 1);
+        }
+
+        return productRepo.save(product);
     }
 
-    // DESCRIPTION
-    if (description != null && !description.isBlank()
-            && !description.equals(product.getDescription())) {
-        product.setDescription(description);
-        isUpdated = true;
-    }
-
-    // PRICE
-    if (price != null
-            && price.compareTo(BigDecimal.ZERO) > 0
-            && (product.getPrice() == null || price.compareTo(product.getPrice()) != 0)) {
-        product.setPrice(price);
-        isUpdated = true;
-    }
-
-    // IS PUBLIC
-    if (isPublic != null
-            && isPublic != product.isPublic()) {
-        product.setPublic(isPublic);
-        isUpdated = true;
-    }
-
-    // IS DELETED
-    if (isDeleted != null
-            && isDeleted != product.isDeleted()) {
-        product.setDeleted(isDeleted);
-        isUpdated = true;
-    }
-
-    // chỉ update metadata nếu có thay đổi thật
-    if (isUpdated) {
-        product.setUpdatedAt(LocalDateTime.now());
-        product.setCurrentVersion(product.getCurrentVersion() + 1);
-    }
-
-    return productRepo.save(product);
-}
+    
         
 }

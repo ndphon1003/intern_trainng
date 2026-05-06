@@ -23,7 +23,5 @@ public class CartEventProducerService {
                 to.queue(queueName)
                 .payload(event)
         );
-        System.out.println(">>> AFTER SEND SQS");
-        System.out.println("debug");
     }
 }

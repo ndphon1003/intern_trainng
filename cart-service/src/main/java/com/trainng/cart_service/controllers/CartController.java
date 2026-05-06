@@ -50,6 +50,10 @@ public class CartController {
             return ResponseEntity.badRequest()
                     .body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
 
+        } catch (RuntimeException e) {  
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ResponseFormat(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null));

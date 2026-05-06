@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.trainng.product_service.dto.request.CreateProductRequest;
 import com.trainng.product_service.dto.request.PatchProductRequest;
+import com.trainng.product_service.dto.request.UpdateQuantityRequest;
 import com.trainng.product_service.dto.response.ListProductResponse;
 import com.trainng.product_service.dto.response.ResponseFormat;
 import com.trainng.product_service.models.Product;
@@ -116,6 +117,52 @@ public class ProductController {
             return ResponseEntity.badRequest().body(new ResponseFormat(HttpStatus.BAD_REQUEST.value(), "The product was not existing", null));
         }
     }
+
+    @PatchMapping("/update-quantity")
+    ResponseEntity<ResponseFormat> updateQuantity(
+            @RequestBody UpdateQuantityRequest request){
+        
+        try {
+            Product updatedQuantity = productService.updateQuantityProduct(
+                    request.getProductId(), request.getQuantity());
+
+            return ResponseEntity.ok(
+                    new ResponseFormat(
+                            HttpStatus.OK.value(),
+                            "Update product successfully",
+                            updatedQuantity
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    new ResponseFormat(
+                            HttpStatus.BAD_REQUEST.value(),
+                            e.getMessage(),
+                            null
+                    )
+            );
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ResponseFormat(
+                            HttpStatus.NOT_FOUND.value(),
+                            e.getMessage(),
+                            null
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    new ResponseFormat(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Failed to update product",
+                            null
+                    )
+            );
+        }
+    }
+    
 
     @PatchMapping("/update-product")
     ResponseEntity<ResponseFormat> updateProduct(

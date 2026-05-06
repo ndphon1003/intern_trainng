@@ -4,9 +4,17 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.trainng.cart_service.dto.event.CartEvent;
+import com.trainng.cart_service.dto.request.UpdateQuantityRequest;
+import com.trainng.cart_service.dto.response.ResponseFormat;
 import com.trainng.cart_service.models.Cart;
 import com.trainng.cart_service.repositories.CartRepo;
 
@@ -16,11 +24,38 @@ public class CartService {
     private CartRepo cartRepo;
     @Autowired
     private CartEventProducerService cartEventProducerService;
+    @Autowired
+    RestTemplate restTemplate;
 
     public Cart addProductToCart(UUID userId, UUID productId, int quantity){
         if (quantity <= 0){
             throw new IllegalArgumentException("Quantity must be greater than 0"); 
         }
+
+        UpdateQuantityRequest requestBody = new UpdateQuantityRequest(productId, quantity);
+        String url = "http://localhost:8083/api/product/update-quantity";
+        
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<UpdateQuantityRequest> requesHttpEntity = new HttpEntity<>(requestBody, headers);
+        
+        ResponseEntity<ResponseFormat> response = 
+            restTemplate.exchange(
+                url,
+                HttpMethod.PATCH,
+                requesHttpEntity,
+                ResponseFormat.class
+            );
+
+        ResponseFormat body = response.getBody();
+        System.out.println(body.getData());
+        if (!response.getStatusCode().is2xxSuccessful() || body == null) {
+            throw new RuntimeException("Quantity update failed");
+        }
+
         Cart cart = new Cart();
         cart.setUserId(userId);
         cart.setProductId(productId);
@@ -33,8 +68,6 @@ public class CartService {
         event.setProductId(productId.toString());
         event.setUserId(userId.toString());
         event.setQuantity(quantity);
-
-        System.out.println(event.getEventType());
 
         cartEventProducerService.sendCartEvent(event, "add-cart-event");
         return savedCart;
